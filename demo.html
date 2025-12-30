@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feliz Año Nuevo, mi amor</title>
+
+<style>
+body {
+    margin: 0;
+    background-color: #0a0a23;
+    color: #f0f0f0;
+    font-family: 'Georgia', serif;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    cursor: pointer;
+}
+
+#container {
+    text-align: center;
+    z-index: 10;
+    max-width: 600px;
+    padding: 20px;
+}
+
+.greeting, .message, .love-line {
+    margin: 15px 0;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 1.2s ease-out;
+}
+
+.greeting { font-size: 2.5em; }
+.message { font-size: 1.2em; }
+.love-line {
+    font-size: 1em;
+    font-style: italic;
+    color: #e0e0e0;
+}
+
+.animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.footer {
+    position: absolute;
+    bottom: 20px;
+    font-size: 0.9em;
+    color: #b0b0b0;
+    z-index: 10;
+}
+
+#fireworks-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+#music-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+button {
+    background: #4a90e2;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover { background: #357abd; }
+</style>
+</head>
+
+<body>
+<canvas id="fireworks-canvas"></canvas>
+
+<div id="music-controls">
+    <button id="playPause" aria-label="Play or pause music">
+        ▶️ Play Happy New Year Melody
+    </button>
+</div>
+
+<div id="container">
+    <div class="greeting" data-delay="0">Hii babyy, ¡Feliz Año Nuevo!</div>
+    <div class="message" data-delay="1200">Qué suerte haber podido encontrarnos este año.</div>
+    <div class="message" data-delay="2600">
+        Con la llegada del nuevo año, lo que más deseo es que tengas una vida en calma,
+        buena salud, y que siempre estés alegre y feliz.
+    </div>
+    <div class="message" data-delay="4200">
+        Pase lo que pase, espero que el año nuevo te trate bien, de la manera que te mereces.
+    </div>
+    <div class="message" data-delay="5600">Estoy aquí contigo.</div>
+    <div class="message" data-delay="6500">&hearts; Te quiero &hearts;</div>
+    <div class="love-line">Fireworks where I am. Calm thoughts of you.</div>
+</div>
+
+<div class="footer">From me. (Click anywhere ✨)</div>
+
+<script>
+// ===== TEXT ANIMATION =====
+document.querySelectorAll('[data-delay]').forEach(el => {
+    setTimeout(() => el.classList.add('animate'), el.dataset.delay);
+});
+
+// ===== CANVAS =====
+const canvas = document.getElementById('fireworks-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+// ===== STARS =====
+let stars = Array.from({ length: 80 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.2,
+    a: Math.random() * 0.5 + 0.2
+}));
+
+// ===== FIREWORKS =====
+let fireworks = [];
+let particles = [];
+const colors = ['#FFF8DC', '#FFE4E1', '#F0F8FF'];
+
+function createFirework(x = Math.random()*canvas.width, y = canvas.height) {
+    fireworks.push({
+        x, y,
+        tx: Math.random()*canvas.width,
+        ty: Math.random()*canvas.height*0.4,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        exploded: false
+    });
+}
+
+function explode(fw) {
+    for (let i = 0; i < 20; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 3 + 1.5;
+        particles.push({
+            x: fw.tx,
+            y: fw.ty,
+            vx: Math.cos(angle)*speed,
+            vy: Math.sin(angle)*speed,
+            a: 1,
+            s: Math.random()*2+1,
+            c: fw.color
+        });
+    }
+}
+
+function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // STARS
+    ctx.fillStyle = '#fff';
+    stars.forEach(s => {
+        ctx.globalAlpha = s.a;
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fill();
+        s.y += 0.02;
+        if (s.y > canvas.height) s.y = 0;
+    });
+
+    // FIREWORKS
+    fireworks.forEach((fw,i)=>{
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.arc(fw.x,fw.y,2,0,Math.PI*2);
+        ctx.fillStyle = fw.color;
+        ctx.fill();
+
+        fw.x += (fw.tx-fw.x)*0.02;
+        fw.y += (fw.ty-fw.y)*0.02;
+
+        if (Math.abs(fw.tx-fw.x)<2 && !fw.exploded) {
+            explode(fw);
+            fw.exploded = true;
+            fireworks.splice(i,1);
+        }
+    });
+
+    // PARTICLES
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    particles.forEach((p,i)=>{
+        ctx.globalAlpha = p.a;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = p.c;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.s,0,Math.PI*2);
+        ctx.fillStyle = p.c;
+        ctx.fill();
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.01;
+        p.a -= 0.003;
+        if (p.a <= 0) particles.splice(i,1);
+    });
+    ctx.restore();
+
+    requestAnimationFrame(animate);
+}
+
+setInterval(()=>Math.random()>0.2 && createFirework(),1200);
+
+// CLICK
+document.addEventListener('click',e=>{
+    if(e.target.tagName!=='BUTTON'){
+        createFirework(e.clientX,e.clientY);
+        revealLoveLine();
+    }
+});
+
+// LOVE LINE (SECRET)
+const loveLine = document.querySelector('.love-line');
+loveLine.style.display='none';
+function revealLoveLine(){
+    loveLine.style.display='block';
+    setTimeout(()=>loveLine.classList.add('animate'),100);
+}
+
+// ===== MUSIC (GIỮ NGUYÊN BẢN GỐC) =====
+let audioContext;
+let isPlayingMusic = false;
+
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+const melody = [
+    {freq: 440.00, duration: 0.4},
+    {freq: 493.88, duration: 0.4},
+    {freq: 554.37, duration: 0.8},
+    {freq: 587.33, duration: 0.4},
+    {freq: 659.25, duration: 0.8},
+    {freq: 739.99, duration: 0.4},
+    {freq: 783.99, duration: 0.4},
+    {freq: 739.99, duration: 0.8},
+    {freq: 659.25, duration: 1.0},
+    {freq: 587.33, duration: 0.5},
+    {freq: 554.37, duration: 0.5},
+    {freq: 493.88, duration: 1.0},
+    {freq: 440.00, duration: 2.0}
+];
+
+function playMelody() {
+    initAudio();
+    if (audioContext.state === 'suspended') audioContext.resume();
+
+    let time = audioContext.currentTime;
+    melody.forEach(note => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        osc.frequency.value = note.freq;
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(0.25, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+
+        osc.start(time);
+        osc.stop(time + note.duration);
+
+        time += note.duration + 0.1;
+    });
+
+    setTimeout(() => {
+        if (isPlayingMusic) playMelody();
+    }, 10000);
+}
+
+const playPauseBtn = document.getElementById('playPause');
+playPauseBtn.onclick = () => {
+    initAudio();
+    isPlayingMusic = !isPlayingMusic;
+    playPauseBtn.textContent = isPlayingMusic
+        ? '⏸️ Pause'
+        : '▶️ Play Happy New Year Melody';
+    if (isPlayingMusic) playMelody();
+};
+
+document.addEventListener('click', () => {
+    initAudio();
+    if (audioContext.state === 'suspended') audioContext.resume();
+}, { once: true });
+
+animate();
+onresize=()=>{canvas.width=innerWidth;canvas.height=innerHeight;}
+</script>
+</body>
+</html>
